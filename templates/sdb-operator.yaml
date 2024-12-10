@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdb-operator
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/component: operator
+spec:
+  replicas: {{ .Values.operator.replicaCount }}
+  selector:
+    matchLabels:
+      name: sdb-operator
+  template:
+    metadata:
+      labels:
+        name: sdb-operator
+    spec:
+      serviceAccountName: sdb-operator
+      containers:
+        - name: sdb-operator
+          image: {{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}
+          imagePullPolicy: Always
+          args: [
+            "--merge-service-annotations",
+            "--fs-group-id", "5555",
+            "--cluster-id", "sdb-cluster"          ]
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "sdb-operator"

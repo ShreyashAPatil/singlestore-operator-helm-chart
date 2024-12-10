@@ -1,0 +1,38 @@
+{{- if .Values.userCreation.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-{{ .Values.userCreation.newUsername }}-user
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: sdb-operator  # Use existing sdb-operator service account
+      containers:
+        - name: create-user-container
+          image: bitnami/kubectl:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Creating new user and granting privileges..."
+
+              # Create the user
+              kubectl exec node-sdb-cluster-master-0 -n {{ .Values.namespace }} -- \
+                  /bin/bash -c "memsql -u {{ .Values.userCreation.rootUsername }} -p'{{ .Values.userCreation.rootPassword }}' \
+                  -e \"CREATE USER '{{ .Values.userCreation.newUsername }}'@'%' IDENTIFIED BY '{{ .Values.userCreation.newPassword }}';\""
+
+              # Grant privileges (default or user-defined)
+              {{- if .Values.userCreation.customGrant.enabled }}
+              kubectl exec node-sdb-cluster-master-0 -n {{ .Values.namespace }} -- \
+                  /bin/bash -c "memsql -u {{ .Values.userCreation.rootUsername }} -p'{{ .Values.userCreation.rootPassword }}' \
+                  -e \"GRANT {{ .Values.userCreation.customGrant.privileges }} ON {{ .Values.userCreation.customGrant.database }} TO '{{ .Values.userCreation.newUsername }}'@'%';\""
+              {{- else }}
+              kubectl exec node-sdb-cluster-master-0 -n {{ .Values.namespace }} -- \
+                  /bin/bash -c "memsql -u {{ .Values.userCreation.rootUsername }} -p'{{ .Values.userCreation.rootPassword }}' \
+                  -e \"GRANT ALL PRIVILEGES ON *.* TO '{{ .Values.userCreation.newUsername }}'@'%';\""
+              {{- end }}
+
+              echo "User created and privileges granted successfully."
+      restartPolicy: Never
+{{- end }}

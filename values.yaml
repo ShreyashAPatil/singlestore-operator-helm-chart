@@ -1,0 +1,55 @@
+namespace: singlestore
+
+operator:
+  image:
+    repository: singlestore/operator
+    tag: 3.258.0-f5ba0d6a
+  replicaCount: 1
+
+cluster:
+  license: BGQwNmVkMzFlMTc1NzRhOGZiMjQ2YjNiYmIwMTg2YzczKEo0ZwAAAAAAAAAAAAAAAAkwNAIYF1SEQ5C2/beQH5L3v669Q2j8MebfWMjdAhhy+up2xNcdyOYsujbIaD+wcRwnl1ZVN6sAAA==
+  adminHashedPassword: "*964053B7B08408D2607120AD66C3A9D3FE2D46EF"
+  nodeImage:
+    repository: singlestore/node
+    tag: alma-8.1.50-740903e129
+  redundancyLevel: 2
+  aggregatorSpec:
+    count: 2
+    height: 0.5
+    storageGB: 20
+    storageClass: "longhorn"
+  leafSpec:
+    count: 1
+    height: 0.5
+    storageGB: 20
+    storageClass: "longhorn"
+
+
+userCreation:
+  enabled: false  # Set this to true only when you want to create the user and grant privileges
+  rootUsername: "root"
+  rootPassword: "07528765-888a-45de-8216-5a4689cd838e"  # After deploying S2 run this in CLI to get rootpassword "kubectl get secret sdb-cluster -n singlestore -o jsonpath='{.data.ROOT_PASSWORD}' | base64 --decode"
+  newUsername: "test2"
+  newPassword: "test2pass"
+  customGrant:
+    enabled: false  # Set this to true to use custom privileges and database
+    privileges: "SELECT, INSERT, UPDATE"  # Example: specify desired privileges
+    database: "*.*"  # Example: specify database and tables (e.g., test_db.*)
+
+
+backupJob:
+  enabled: false  # Set this to true to enable the backup job
+  schedule: "30 20 * * *"  # Cron schedule for running the backup job
+  gcsPath: "vertica-db/singlestore-backup"  # GCS bucket path for storing backups
+  gcsCredentials:
+    accessId: "<>"
+    secretKey: "<>"
+
+
+restoreJob:
+  enabled: false  # Set this to true when triggering a restore
+  databaseName: "test"  # The name of the database to restore
+  backupPath: "gs://<>"  # Path to the backup file
+  gcsCredentials:
+    accessId: "<>"
+    secretKey: "<>"

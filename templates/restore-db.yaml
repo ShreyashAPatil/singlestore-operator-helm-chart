@@ -1,0 +1,26 @@
+{{- if .Values.restoreJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: singlestore-restore
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: backup  # Use the backup service account
+      containers:
+      - name: restore
+        image: bitnami/kubectl:latest
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Restoring database: {{ .Values.restoreJob.databaseName }} from {{ .Values.restoreJob.backupPath }}"
+            kubectl exec node-sdb-cluster-master-0 -n {{ .Values.namespace }} -- \
+            /bin/bash -c "memsql -u {{ .Values.userCreation.rootUsername }} -p'{{ .Values.userCreation.rootPassword }}' -e \
+            \"RESTORE DATABASE {{ .Values.restoreJob.databaseName }} FROM GCS '{{ .Values.restoreJob.backupPath }}/{{ .Values.restoreJob.databaseName }}.backup' \
+            CREDENTIALS '{\\\"access_id\\\": \\\"{{ .Values.restoreJob.gcsCredentials.accessId }}\\\", \
+            \\\"secret_key\\\": \\\"{{ .Values.restoreJob.gcsCredentials.secretKey }}\\\"}';\""
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}

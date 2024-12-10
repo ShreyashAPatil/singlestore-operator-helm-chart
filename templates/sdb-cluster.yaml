@@ -1,0 +1,39 @@
+apiVersion: memsql.com/v1alpha1
+kind: MemsqlCluster
+metadata:
+  name: sdb-cluster
+  namespace: {{ .Values.namespace }}
+spec:
+  license: {{ .Values.cluster.license }}
+  adminHashedPassword: "{{ .Values.cluster.adminHashedPassword }}"
+  nodeImage:
+    repository: {{ .Values.cluster.nodeImage.repository }}
+    tag: {{ .Values.cluster.nodeImage.tag }}
+  redundancyLevel: {{ .Values.cluster.redundancyLevel }}
+  serviceSpec:
+    type: NodePort
+    objectMetaOverrides:
+      labels:
+        custom: label
+      annotations:
+        custom: annotations
+  aggregatorSpec:
+    count: {{ .Values.cluster.aggregatorSpec.count }}
+    height: {{ .Values.cluster.aggregatorSpec.height }}
+    storageGB: {{ .Values.cluster.aggregatorSpec.storageGB }}
+    storageClass: {{ .Values.cluster.aggregatorSpec.storageClass }}
+    objectMetaOverrides:
+      annotations:
+        optional: annotation
+      labels:
+        optional: label
+  leafSpec:
+    count: {{ .Values.cluster.leafSpec.count }}
+    height: {{ .Values.cluster.leafSpec.height }}
+    storageGB: {{ .Values.cluster.leafSpec.storageGB }}
+    storageClass: {{ .Values.cluster.leafSpec.storageClass }}
+    objectMetaOverrides:
+      annotations:
+        optional: annotation
+      labels:
+        optional: label
